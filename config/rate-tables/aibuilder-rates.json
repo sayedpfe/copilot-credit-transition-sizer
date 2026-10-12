@@ -1,0 +1,134 @@
+{
+  "version": "2026-07.2",
+  "currency": "AIB",
+  "effectiveDate": "2025-11-01",
+  "retrievedDate": "2026-07-13",
+  "sourceUrl": "https://learn.microsoft.com/en-us/ai-builder/administer-licensing#ai-builder-capability-rate-table",
+  "notes": "AI Builder capability rate table, AI Builder credit column. Seeded AI Builder credits are removed on 2026-11-01 (https://learn.microsoft.com/en-us/ai-builder/endofaibcredits). Rates are used to invert observed AI Builder credit consumption back into capability units (pages, images, 1K chars, 1K tokens). Capabilities are matched in array order: first match wins, so prebuilt document models must precede the generic custom document processing entry. Patterns are case-insensitive regular expressions tested against AI model template name, AI model name, event name and the LLM model name from msdyn_eventdata.",
+  "capabilities": [
+    {
+      "id": "receipt-invoice-id",
+      "displayName": "Receipt, invoice, identity document analysis",
+      "tier": "ContentProcessing",
+      "unit": "page",
+      "rateType": "per-unit",
+      "ratePerUnit": 32,
+      "match": { "patterns": ["invoice", "receipt", "identity\\s*document", "id\\s*reader"] }
+    },
+    {
+      "id": "contract-healthcard-imagedesc",
+      "displayName": "Contract processing, health insurance card processing, image description",
+      "tier": "ContentProcessing",
+      "unit": "image",
+      "rateType": "per-unit",
+      "ratePerUnit": 32,
+      "notes": "Free as long as in preview per the rate table footnote.",
+      "match": { "patterns": ["contract", "health\\s*insurance", "image\\s*description"] }
+    },
+    {
+      "id": "object-detection",
+      "displayName": "Object detection",
+      "tier": "ContentProcessing",
+      "unit": "image",
+      "rateType": "per-unit",
+      "ratePerUnit": 8,
+      "match": { "patterns": ["object\\s*detection"] }
+    },
+    {
+      "id": "custom-document-processing",
+      "displayName": "Custom document processing",
+      "tier": "ContentProcessing",
+      "unit": "page",
+      "rateType": "per-unit",
+      "ratePerUnit": 100,
+      "match": { "patterns": ["document\\s*processing", "form\\s*processing"] }
+    },
+    {
+      "id": "text-recognition-ocr",
+      "displayName": "Text recognition (OCR)",
+      "tier": "Basic",
+      "unit": "page",
+      "rateType": "per-unit",
+      "ratePerUnit": 3,
+      "match": { "patterns": ["text\\s*recognition", "\\bocr\\b"] }
+    },
+    {
+      "id": "text-translation",
+      "displayName": "Text translation",
+      "tier": "Standard",
+      "unit": "1K-chars",
+      "rateType": "per-unit",
+      "ratePerUnit": 22,
+      "match": { "patterns": ["translat"] }
+    },
+    {
+      "id": "simple-text-analysis",
+      "displayName": "Simple text analysis: sentiment, language detection, key phrase extraction",
+      "tier": "Basic",
+      "unit": "1K-chars",
+      "rateType": "per-unit",
+      "ratePerUnit": 2,
+      "match": { "patterns": ["sentiment", "language\\s*detection", "key\\s*phrase"] }
+    },
+    {
+      "id": "advanced-text-analysis",
+      "displayName": "Advanced text analysis: category classification, entity extraction",
+      "tier": "Standard",
+      "unit": "1K-chars",
+      "rateType": "per-unit",
+      "ratePerUnit": 20,
+      "match": { "patterns": ["category\\s*classification", "entity\\s*extraction", "classification"] }
+    },
+    {
+      "id": "business-card-prediction",
+      "displayName": "Business card reader, prediction",
+      "tier": "Basic",
+      "unit": "none",
+      "rateType": "free",
+      "match": { "patterns": ["business\\s*card", "prediction"] }
+    },
+    {
+      "id": "prompt-basic",
+      "displayName": "Prompt (basic LLM model)",
+      "tier": "Basic",
+      "unit": "1K-tokens",
+      "rateType": "token-split",
+      "blendedRatePerUnit": 1.2,
+      "tokenRates": { "inputPer1K": 1, "outputPer1K": 3 },
+      "assumption": "Blended rate assumes 90% input / 10% output tokens per Microsoft's published estimate; exact input/output rates are used when the token split is present in msdyn_eventdata. Prompts created before model selection default to the basic model per the credit-management FAQ; events whose LLM model cannot be resolved are therefore rated basic.",
+      "match": {
+        "patterns": ["prompt", "\\bgpt\\b", "eingabeaufforderung", "ai\\s*(summarize|extract|reply|classify|sentiment)"],
+        "llmModelPatterns": ["mini", "nano", "gpt-35", "gpt-3\\.5", "basic"]
+      }
+    },
+    {
+      "id": "prompt-standard",
+      "displayName": "Prompt (standard LLM model)",
+      "tier": "Standard",
+      "unit": "1K-tokens",
+      "rateType": "token-split",
+      "blendedRatePerUnit": 24,
+      "tokenRates": { "inputPer1K": 20, "outputPer1K": 60 },
+      "assumption": "Blended rate assumes 90% input / 10% output tokens per Microsoft's published estimate.",
+      "assumptionTiering": "gpt-4.1/gpt-41 (full) and gpt-5-chat assumed STANDARD tier; verify against the AI Builder rate card in the Power Platform Licensing Guide PDF when Microsoft updates it.",
+      "match": {
+        "patterns": ["prompt", "\\bgpt\\b"],
+        "llmModelPatterns": ["gpt-4o(?!-mini)", "gpt-?4[._]?1(?!-mini|-nano)", "gpt-5-chat", "standard"]
+      }
+    },
+    {
+      "id": "prompt-premium",
+      "displayName": "Prompt (premium LLM model)",
+      "tier": "Premium",
+      "unit": "1K-tokens",
+      "rateType": "token-split",
+      "blendedRatePerUnit": 182,
+      "tokenRates": { "inputPer1K": 140, "outputPer1K": 560 },
+      "assumption": "Blended rate assumes 90% input / 10% output tokens per Microsoft's published estimate. Premium covers reasoning-class models. gpt-5 family (except -chat/-mini/-nano) assumed PREMIUM: supported by run-level plausibility (observed ~10K AIB credits/run implies ~57K tokens at premium rates vs an impossible ~8.7M tokens at basic rates); verify against the Licensing Guide rate card.",
+      "match": {
+        "patterns": ["prompt", "\\bgpt\\b"],
+        "llmModelPatterns": ["\\bo1\\b", "\\bo3\\b", "\\bo4\\b", "gpt-?5(?!-chat|.*mini|.*nano)", "reasoning", "premium", "deep\\s*reasoning"]
+      }
+    }
+  ]
+}

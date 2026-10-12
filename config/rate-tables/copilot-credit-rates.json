@@ -1,0 +1,52 @@
+{
+  "version": "2026-07.1",
+  "currency": "CC",
+  "effectiveDate": "2025-09-01",
+  "retrievedDate": "2026-07-13",
+  "sourceUrls": [
+    "https://learn.microsoft.com/en-us/ai-builder/administer-licensing#ai-builder-capability-rate-table",
+    "https://learn.microsoft.com/en-us/microsoft-copilot-studio/requirements-messages-management#copilot-credits-billing-rates",
+    "https://learn.microsoft.com/en-us/ai-builder/message-management#copilot-credit-consumption-rates"
+  ],
+  "notes": "Copilot Credit rates for AI tools / AI Builder capabilities. Rates apply per unit regardless of unit kind: 0.1 / 1.5 / 10 Copilot Credits per 1K tokens, or 1K characters, or 1 image, or 1 page depending on the capability; content processing tools are 8 Copilot Credits per image or page. Token rates apply to total tokens (input including system prompt + output including reasoning) per message-management.",
+  "features": [
+    {
+      "id": "text-gen-basic",
+      "displayName": "Text and generative AI tools (basic)",
+      "unitDescription": "1K tokens, or 1K characters, or 1 image, or 1 page",
+      "ratePerUnit": 0.1
+    },
+    {
+      "id": "text-gen-standard",
+      "displayName": "Text and generative AI tools (standard)",
+      "unitDescription": "1K tokens, or 1K characters, or 1 image, or 1 page",
+      "ratePerUnit": 1.5
+    },
+    {
+      "id": "text-gen-premium",
+      "displayName": "Text and generative AI tools (premium)",
+      "unitDescription": "1K tokens, or 1K characters, or 1 image, or 1 page",
+      "ratePerUnit": 10
+    },
+    {
+      "id": "content-processing",
+      "displayName": "Content processing tools",
+      "unitDescription": "1 image or 1 page",
+      "ratePerUnit": 8
+    }
+  ],
+  "capabilityToFeature": {
+    "prompt-basic": "text-gen-basic",
+    "prompt-standard": "text-gen-standard",
+    "prompt-premium": "text-gen-premium",
+    "text-recognition-ocr": "text-gen-basic",
+    "simple-text-analysis": "text-gen-basic",
+    "advanced-text-analysis": "text-gen-standard",
+    "text-translation": "text-gen-standard",
+    "custom-document-processing": "content-processing",
+    "receipt-invoice-id": "content-processing",
+    "object-detection": "content-processing",
+    "contract-healthcard-imagedesc": "content-processing",
+    "business-card-prediction": null
+  }
+}

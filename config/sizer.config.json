@@ -1,0 +1,19 @@
+{
+  "growthBuffer": 0.2,
+  "packSizeCredits": 25000,
+  "monthsLookback": 12,
+  "validationDeltaThreshold": 0.05,
+  "excludeQuickTests": true,
+  "excludeFailedRuns": true,
+  "excludeTrialRows": true,
+  "numberLocale": "en-US",
+  "csvFallbackConversionFactor": 0.25,
+  "csvFallbackConversionFactorNote": "Used ONLY when forecasting from the PPAC CSV export (no per-capability detail available). Set this to the conversion factor of your dominant workload from the per-capability table in the README (e.g. 0.08 for custom document processing, 0.25 for invoice/receipt, ~0.083 for basic prompts).",
+  "environments": [
+    {
+      "url": "https://yourorg.crm.dynamics.com",
+      "environmentId": "",
+      "name": ""
+    }
+  ]
+}

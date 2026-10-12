@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>credit-transition-sizer — Solution Architecture</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --card: #ffffff; --ink: #1a2333; --muted: #5a6a85;
+    --accent: #1f3864; --accent2: #2e75b6; --ok: #1e7b45; --warn: #b45309;
+    --line: #d6dce6; --code: #eef1f6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12161d; --card: #1a212c; --ink: #e6ebf3; --muted: #9aa8bd;
+      --accent: #7fa8d9; --accent2: #6aa5e0; --ok: #4cc37f; --warn: #e0a13f;
+      --line: #2c3644; --code: #232c3a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px 64px; }
+  header { border-bottom: 3px solid var(--accent); padding-bottom: 16px; margin-bottom: 28px; }
+  h1 { font-size: 1.7rem; margin: 0 0 6px; color: var(--accent); }
+  h2 { font-size: 1.25rem; margin: 40px 0 12px; color: var(--accent);
+       border-left: 4px solid var(--accent2); padding-left: 10px; }
+  h3 { font-size: 1.02rem; margin: 22px 0 8px; }
+  p.lead { color: var(--muted); margin: 0; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+          padding: 18px 20px; margin: 14px 0; }
+  code, .mono { font-family: "Cascadia Code", Consolas, monospace; font-size: 0.9em;
+                background: var(--code); border-radius: 4px; padding: 1px 5px; }
+  pre { background: var(--code); border: 1px solid var(--line); border-radius: 8px;
+        padding: 14px 16px; overflow-x: auto; font-size: 0.85rem; line-height: 1.5; }
+  pre code { background: none; padding: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 0.92rem; }
+  th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code); }
+  td.num, th.num { text-align: right; }
+  .muted { color: var(--muted); }
+  .tag { display: inline-block; font-size: 0.75rem; font-weight: 600; border-radius: 999px;
+         padding: 2px 10px; margin-right: 6px; }
+  .tag.aib { background: #fdecd3; color: #8a4b08; }
+  .tag.cc  { background: #d9e8fb; color: #1c4e8a; }
+  @media (prefers-color-scheme: dark) {
+    .tag.aib { background: #4a3410; color: #f3c98b; }
+    .tag.cc  { background: #17304d; color: #a9cdf5; }
+  }
+  /* pipeline */
+  .flow { display: flex; flex-direction: column; gap: 0; margin: 18px 0; }
+  .stage { background: var(--card); border: 1.5px solid var(--accent2); border-radius: 10px;
+           padding: 12px 16px; }
+  .stage h4 { margin: 0 0 4px; font-size: 0.98rem; color: var(--accent2); }
+  .stage p { margin: 0; font-size: 0.9rem; color: var(--muted); }
+  .arrow { text-align: center; color: var(--accent2); font-size: 1.3rem; line-height: 1.4; }
+  .cols { display: flex; gap: 14px; flex-wrap: wrap; }
+  .cols > div { flex: 1 1 300px; }
+  .side { border-style: dashed; border-color: var(--warn); }
+  .side h4 { color: var(--warn); }
+  /* decision boxes */
+  .decision { border-left: 4px solid var(--accent2); background: var(--code);
+              padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 8px 0; font-size: 0.93rem; }
+  .foot { margin-top: 48px; border-top: 1px solid var(--line); padding-top: 14px;
+          font-size: 0.85rem; color: var(--muted); }
+  ul { margin: 8px 0; padding-left: 22px; }
+  li { margin: 4px 0; }
+  a { color: var(--accent2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>credit-transition-sizer — Solution Architecture</h1>
+  <p class="lead">Sizes the Copilot Credit purchase that replaces seeded AI Builder credits, which Microsoft removes on
+  <strong>November 1, 2026</strong> with no conversion. TypeScript / Node 20+, standalone, read-only against the tenant.</p>
+</header>
+
+<h2>1. The problem in one paragraph</h2>
+<div class="card">
+  <p>The tenant runs AI Builder features (document processing, prompts, text analysis…) in Power Apps and Power Automate on
+  <span class="tag aib">AI Builder credits</span> seeded by premium licenses. Those credits disappear on 2026-11-01
+  (<a href="https://learn.microsoft.com/en-us/ai-builder/endofaibcredits">endofaibcredits</a>). Afterwards every AI Builder run —
+  in apps, flows, and Copilot Studio — consumes <span class="tag cc">Copilot Credits</span>, sold as prepaid packs of
+  <strong>25,000 credits/month</strong>. There is <strong>no official conversion ratio</strong> between the two currencies;
+  each capability has its own published rate in each currency. The tool therefore re-rates <em>actual historical usage</em>
+  capability-by-capability and sizes the pack purchase on the <strong>peak month</strong> (unused credits do not roll over).</p>
+</div>
+
+<h2>2. End-to-end data flow</h2>
+<div class="flow">
+  <div class="stage">
+    <h4>① Sources</h4>
+    <p><strong>Primary:</strong> Dataverse Web API — <code>msdyn_aievents</code> (AI Event table) per environment; one row per AI run
+    with timestamp, model, consumption source, credits consumed, and the raw <code>msdyn_eventdata</code> JSON.
+    <strong>Fallback:</strong> PPAC "AI Builder consumption report" CSV/XLSX export (daily totals, no capability detail).</p>
+  </div>
+  <div class="arrow">▼</div>
+  <div class="stage">
+    <h4>② Ingest — <code>sizer ingest</code> <span class="muted">(src/ingest/, src/auth/)</span></h4>
+    <p>Auth per §6 (delegated Azure CLI or app registration) → GET-only OData queries with <code>@odata.nextLink</code> paging and
+    429/503 <code>Retry-After</code> back-off. Joins each event to its AI Model + Template name and captures the triggering
+    flow/app (<code>msdyn_automationname</code>). Defensive parse of <code>msdyn_eventdata</code>: currency indicators,
+    input/output token counts, LLM model name. Result cached as JSON per environment in <code>data/</code>.</p>
+    <p><strong>Batch mode (many environments):</strong> list URLs in <code>ENVIRONMENT_URLS</code> (discoverable tenant-wide via the
+    global discovery service) and one run processes them all — <code>[i/N]</code> progress counter, <strong>fail-and-continue</strong>
+    on access errors (403 → inline hint to self-elevate), a closing OK/failed summary, and an append-only
+    <code>data/ingest-log.csv</code> (timestamp · environment · status · events · window · error) that doubles as the
+    coverage tracker across re-runs.</p>
+  </div>
+  <div class="arrow">▼</div>
+  <div class="stage">
+    <h4>③ Currency tagging <span class="muted">(src/domain/currency-tagger.ts)</span></h4>
+    <p>Every event is tagged <code>AIB</code> / <code>CC</code> / <code>inferred-AIB</code> / <code>inferred-CC</code>
+    plus its source (Power Automate, Power Apps, API, Copilot Studio). Rules in §3.</p>
+  </div>
+  <div class="arrow">▼</div>
+  <div class="stage">
+    <h4>④ Re-rating engine <span class="muted">(src/domain/rate-mapper.ts + config/rate-tables/*.json)</span></h4>
+    <p>Match event → capability (regex patterns over template/model/event/LLM names, first match wins) → recover units
+    (tokens from eventdata, or credits ÷ AIB rate) → price units at the Copilot Credit rate. Already-CC events pass through.
+    No match = <strong>unmapped bucket</strong>, excluded and reported — never guessed. All rates live in versioned JSON,
+    zero rates in code.</p>
+  </div>
+  <div class="arrow">▼</div>
+  <div class="stage">
+    <h4>⑤ Aggregation &amp; sizing — <code>sizer forecast</code> <span class="muted">(src/domain/aggregate.ts, sizing.ts)</span></h4>
+    <p>Per environment × calendar month (UTC), quick tests and failed runs excluded, actual data window detected
+    (retention may be &lt; 12 months). Peak month × (1 + growth buffer) ÷ 25,000 → packs, computed per environment
+    <em>and</em> as a tenant pool, with an allocation recommendation.</p>
+  </div>
+  <div class="arrow">▼</div>
+  <div class="stage">
+    <h4>⑥ Outputs <span class="muted">(src/report/)</span></h4>
+    <p><code>output/sizing-report.xlsx</code> (Summary · <strong>Per-Flow</strong> — Copilot Credits per flow/app/agent, average and
+    peak month · Per-Environment · Per-Capability · Unmapped · <strong>How it is calculated</strong> — the math step by step with a
+    worked example) — <code>output/sizing-report.md</code> (customer-ready executive summary incl. the per-flow table,
+    locale-aware numbers, e.g. de-DE) — console summary with top consumers per environment. Events without a recorded
+    flow name group by source + model (e.g. “(PowerApps: Sentiment analysis)”), so nothing collapses into an opaque bucket.</p>
+  </div>
+</div>
+<div class="cols">
+  <div class="stage side">
+    <h4>Side path A — <code>sizer validate</code></h4>
+    <p>Compares the tool's current-month <span class="tag aib">AIB</span> totals per environment against the PPAC consumption
+    report; deltas &gt; 5% flagged. PPAC computation can lag 5+ days and the export covers a rolling 30 days — reconcile one
+    environment before scaling to all.</p>
+  </div>
+  <div class="stage side">
+    <h4>Side path B — <code>sizer forecast --csv</code></h4>
+    <p>No API access? The PPAC export alone is sized with one blended conversion factor from config
+    (<code>csvFallbackConversionFactor</code>). Loudly flagged in every output: rough estimate, no capability detail,
+    no Copilot Studio consumption.</p>
+  </div>
+</div>
+
+<h2>3. Currency decision logic (per event)</h2>
+<div class="card">
+  <div class="decision"><strong>1.</strong> <code>msdyn_eventdata</code> contains an explicit currency indicator →
+    <strong>trust it</strong>: tag <code>AIB</code> or <code>CC</code>. <span class="muted">(Event data always wins over inference.)</span></div>
+  <div class="decision"><strong>2.</strong> else source = Copilot Studio (<code>msdyn_consumptionsource = 3, MCS</code>) →
+    <code>inferred-CC</code>. <span class="muted">Agents and agent flows always consume Copilot Credits; AI Builder credits are never
+    consumed in this context. Classic flows converted to agent flows arrive here too.</span></div>
+  <div class="decision"><strong>3.</strong> else (Power Automate <code>0</code>, Power Apps <code>1</code>, API <code>2</code>) →
+    <code>inferred-AIB</code>. <span class="muted">Apps and classic flows consume AI Builder credits first, falling back to Copilot
+    Credits only on exhaustion; consumption resets on the 1st of each month.</span></div>
+</div>
+
+<h2>4. The re-rating equation</h2>
+<div class="card">
+  <p>Because Microsoft publishes <em>both</em> rates per capability, conversion is a two-step inversion, never a global ratio:</p>
+<pre><code>units            = AIB credits consumed ÷ AIB rate per unit      (or exact token counts from eventdata)
+Copilot Credits  = units × CC rate per unit</code></pre>
+  <table>
+    <tr><th>Capability</th><th class="num">AIB rate</th><th class="num">CC rate</th><th class="num">CC per 1 AIB credit</th></tr>
+    <tr><td>Object detection</td><td class="num">8 / image</td><td class="num">8 / image</td><td class="num">1.0</td></tr>
+    <tr><td>Receipt / invoice / ID · contract / health card / image description</td><td class="num">32</td><td class="num">8</td><td class="num">0.25</td></tr>
+    <tr><td>Custom document processing</td><td class="num">100 / page</td><td class="num">8 / page</td><td class="num">0.08</td></tr>
+    <tr><td>Prompt basic / standard / premium (90/10 token blend)</td><td class="num">1.2 / 24 / 182 per 1K tokens</td><td class="num">0.1 / 1.5 / 10</td><td class="num">≈0.083 / 0.0625 / ≈0.055</td></tr>
+    <tr><td>Advanced text analysis</td><td class="num">20 / 1K chars</td><td class="num">1.5</td><td class="num">0.075</td></tr>
+    <tr><td>Text translation</td><td class="num">22 / 1K chars</td><td class="num">1.5</td><td class="num">≈0.068</td></tr>
+    <tr><td>Simple text analysis</td><td class="num">2 / 1K chars</td><td class="num">0.1</td><td class="num">0.05</td></tr>
+    <tr><td>Text recognition (OCR)</td><td class="num">3 / page</td><td class="num">0.1 / page</td><td class="num">≈0.033</td></tr>
+    <tr><td>Business card / prediction</td><td class="num">free</td><td class="num">free</td><td class="num">—</td></tr>
+  </table>
+  <p class="muted">Example: an invoice run logged 32 AIB credits → 32 ÷ 32 = 1 page → 1 × 8 = <strong>8 Copilot Credits</strong> after the transition.
+  Factors are computed at runtime from the two rate-table files; the Per-Capability sheet shows the effective factor actually applied.
+  Prompt tier (basic / standard / premium) resolves from the LLM model name recorded in the event — patterns cover the gpt-4/gpt-5
+  model families incl. dotless variants (rate tables v2026-07.2); unresolvable models default to basic, which is the conservative
+  ceiling (highest CC), never an underestimate.</p>
+</div>
+
+<h2>5. Sizing math</h2>
+<div class="card">
+<pre><code>forecast month total = Σ forecast Copilot Credits of all events in that env + month  (100% re-rated:
+                       after 2026-11-01 this tenant has zero AI Builder credits)
+
+peak                 = max over calendar months          (unused credits do NOT roll over)
+buffered             = peak × (1 + growthBuffer)          (default 20%, configurable)
+packs                = ceil(buffered ÷ 25,000)
+
+tenant pool packs    = packs(peak of tenant-wide monthly totals)
+per-env packs        = Σ packs(each environment's own peak)   ← ≥ tenant pool when peaks fall in different months</code></pre>
+  <p class="muted">The report recommends tenant-level pooling when it needs fewer packs, unless environments require guaranteed
+  isolated capacity. A peak in the current (partial) month is flagged — re-run after month end.</p>
+</div>
+
+<h2>6. Identity &amp; permissions — three options</h2>
+<div class="card">
+  <table>
+    <tr><th>Option</th><th>Setup effort</th><th>Security posture</th><th>Best for</th></tr>
+    <tr>
+      <td><strong>A. Delegated — Azure CLI</strong><br><code>--auth azcli</code></td>
+      <td><code>az login</code> only — <strong>no app registration, no app users</strong></td>
+      <td>Runs as the signed-in admin (MFA / Conditional Access apply). The Power Platform admin
+          <strong>self-elevates to System Administrator per environment</strong> in PPAC — temporary,
+          <strong>audited in Microsoft Purview</strong>, auto-expires with PIM.</td>
+      <td>One-off sizing runs by an admin (typical case)</td>
+    </tr>
+    <tr>
+      <td><strong>B. App registration</strong><br>client credentials (secret / certificate)</td>
+      <td>App registration + one application user per environment
+          (scriptable: <code>pac admin assign-user … --application-user</code>)</td>
+      <td>Unattended, least-privilege custom role: <strong>Read</strong> on <code>msdyn_aievent</code>,
+          <code>msdyn_aimodel</code>, <code>msdyn_aitemplate</code>. Standing credential to manage.</td>
+      <td>Recurring / scheduled runs</td>
+    </tr>
+    <tr>
+      <td><strong>C. PPAC CSV fallback</strong><br><code>forecast --csv</code></td>
+      <td>None</td>
+      <td>Zero data-plane access — admin downloads the consumption report from PPAC.</td>
+      <td>Customers who grant nothing; rough estimate only</td>
+    </tr>
+  </table>
+  <p class="muted"><strong>All options: blast radius zero writes</strong> — the tool sends GET requests only; secrets (if any) stay in
+  <code>.env</code> (gitignored). Note: Microsoft no longer auto-grants Power Platform admins Dataverse data access — self-elevation per
+  environment is the documented mechanism (<a href="https://learn.microsoft.com/en-us/power-platform/admin/manage-high-privileged-admin-roles">manage-high-privileged-admin-roles</a>).</p>
+</div>
+
+<h2>7. Module map</h2>
+<div class="card">
+<table>
+  <tr><th>Path</th><th>Responsibility</th></tr>
+  <tr><td><code>src/cli.ts</code></td><td>Commands <code>ingest</code> / <code>validate</code> / <code>forecast</code>, <code>--environment</code>, <code>--csv</code>, <code>--auth azcli</code>; batch tracker + <code>ingest-log.csv</code></td></tr>
+  <tr><td><code>src/config.ts</code></td><td>Zod-validated config + .env + rate-table loading with cross-file integrity checks</td></tr>
+  <tr><td><code>src/auth/token.ts</code></td><td>MSAL client-credentials token provider (secret / certificate)</td></tr>
+  <tr><td><code>src/ingest/dataverse.ts</code></td><td>OData client: paging, throttling, model/template join, row mapping</td></tr>
+  <tr><td><code>src/ingest/eventdata-parser.ts</code></td><td>Defensive <code>msdyn_eventdata</code> JSON extraction (currency, tokens, LLM)</td></tr>
+  <tr><td><code>src/ingest/ppac-report.ts</code></td><td>PPAC CSV/XLSX export parser (header-tolerant)</td></tr>
+  <tr><td><code>src/domain/currency-tagger.ts</code></td><td>Consumption-source mapping + currency rules (§3)</td></tr>
+  <tr><td><code>src/domain/rate-mapper.ts</code></td><td>Capability matching, prompt-tier resolution, unit inversion, CC pricing (§4)</td></tr>
+  <tr><td><code>src/domain/aggregate.ts</code> · <code>sizing.ts</code></td><td>Monthly/capability/<strong>per-flow</strong> rollups, data-window detection, peak + pack math (§5)</td></tr>
+  <tr><td><code>tools/</code></td><td><code>generate-demo-data.mjs</code> (synthetic rehearsal incl. same-credits conversion showcase + lagging-PPAC variant) · <code>Build-CustomerPackage.ps1</code> (offline zip with bundled installers)</td></tr>
+  <tr><td><code>src/validate/ppac-compare.ts</code></td><td>Tool-vs-PPAC reconciliation with delta flagging</td></tr>
+  <tr><td><code>src/ingest/transcripts.ts</code> · <code>src/domain/agent-consumption.ts</code></td><td><code>sizer consumption</code> — per-agent sessions (transcript metadata only, no content) + MCS AI-tool credits; opt-in conversational estimate; billing truth stays PPAC Manage Agents</td></tr>
+  <tr><td><code>src/report/</code></td><td>xlsx (4 sheets), markdown executive summary, console, locale formatting</td></tr>
+  <tr><td><code>config/rate-tables/*.json</code></td><td>Versioned, dated, source-cited rates — the only place rates exist</td></tr>
+  <tr><td><code>tests/</code></td><td>27 vitest tests: currency rules, rate mapping, peak/pack math, CSV parser — synthetic fixtures only</td></tr>
+</table>
+</div>
+
+<h2>8. Honest limits</h2>
+<div class="card">
+  <ul>
+    <li><code>msdyn_aievent</code> is documented as a <em>schema reference</em>, not a supported consumption-reporting API —
+        that is exactly why the <code>validate</code> command exists. Reconcile before presenting.</li>
+    <li>Row-level currency is not a dedicated column; without an explicit eventdata indicator the tag is an inference
+        (<code>inferred-*</code>) per the documented rules.</li>
+    <li>Table retention may be shorter than 12 months (bulk-delete jobs) — the actual data window is detected and reported.</li>
+    <li>Copilot Studio consumption beyond AI Builder capabilities (generative answers, agent actions, agent flow actions,
+        tenant graph grounding) is out of scope — size it with Microsoft's agent usage estimator.</li>
+    <li><strong>Estimates only.</strong> Verify against the Microsoft Power Platform Licensing Guide and the Copilot Credit Guide before purchasing.</li>
+  </ul>
+</div>
+
+<div class="foot">
+  Sources (Microsoft Learn, GA, retrieved 2026-07-13): endofaibcredits · credit-management · message-management ·
+  administer-licensing (capability rate table) · administer-consumption-report · activity-monitoring ·
+  microsoft-copilot-studio/requirements-messages-management · microsoft-copilot-studio/billing-licensing ·
+  power-apps/…/reference/entities/msdyn_aievent. Full linked list in README.md.
+</div>
+
+</div>
+</body>
+</html>

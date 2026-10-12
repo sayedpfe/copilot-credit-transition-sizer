@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - name: Demo pipeline smoke test
+        run: |
+          node tools/generate-demo-data.mjs
+          node dist/cli.js --data-dir ./data-demo --out-dir ./output-demo forecast
+          node dist/cli.js --data-dir ./data-demo validate --csv ./data-demo/demo-ppac-prod.csv --environment https://contoso-demo-prod.crm.dynamics.com

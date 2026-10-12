@@ -1,0 +1,37 @@
+{
+  "value": [
+    {
+      "msdyn_aieventid": "aaaaaaaa-0000-0000-0000-000000000001",
+      "msdyn_name": "Invoice run",
+      "msdyn_processingdate": "2026-07-01T09:30:00Z",
+      "msdyn_processingstatus": 0,
+      "msdyn_consumptionsource": 0,
+      "msdyn_creditconsumed": 32,
+      "msdyn_quicktest": false,
+      "msdyn_eventdata": "{\"pages\":1}",
+      "_msdyn_aimodelid_value": "bbbbbbbb-0000-0000-0000-000000000001"
+    },
+    {
+      "msdyn_aieventid": "aaaaaaaa-0000-0000-0000-000000000002",
+      "msdyn_name": "Agent prompt run",
+      "msdyn_processingdate": "2026-07-02T14:00:00Z",
+      "msdyn_processingstatus": 0,
+      "msdyn_consumptionsource": 3,
+      "msdyn_creditconsumed": 1,
+      "msdyn_quicktest": false,
+      "msdyn_eventdata": "{\"model\":\"gpt-4o-mini\",\"inputTokens\":900,\"outputTokens\":100}",
+      "_msdyn_aimodelid_value": "bbbbbbbb-0000-0000-0000-000000000002"
+    },
+    {
+      "msdyn_aieventid": "aaaaaaaa-0000-0000-0000-000000000003",
+      "msdyn_name": "Orphan model run",
+      "msdyn_processingdate": "2026-07-03T08:00:00Z",
+      "msdyn_processingstatus": 1,
+      "msdyn_consumptionsource": 1,
+      "msdyn_creditconsumed": 0,
+      "msdyn_quicktest": true,
+      "msdyn_eventdata": null,
+      "_msdyn_aimodelid_value": null
+    }
+  ]
+}
