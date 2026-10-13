@@ -17,11 +17,14 @@ function normalizeHeader(header: string): string {
 
 const HEADER_ALIASES: Record<string, keyof PpacRow> = {
   date: 'date',
+  startdatetime: 'date', // schema observed Oct 2026
   userid: 'userId',
+  useremail: 'userEmail', // schema observed Oct 2026
   environmentid: 'environmentId',
   environmentname: 'environmentName',
   aiconsumption: 'aiConsumption',
   aiconsumptioncredits: 'aiConsumption',
+  consumptionunits: 'aiConsumption', // schema observed Oct 2026
   creditsconsumed: 'aiConsumption',
   istrial: 'isTrial',
 };
@@ -66,6 +69,7 @@ function buildRows(headerCells: string[], dataRows: unknown[][]): PpacRow[] {
     const row: PpacRow = {
       date: '',
       userId: null,
+      userEmail: null,
       environmentId: null,
       environmentName: null,
       aiConsumption: 0,
@@ -85,6 +89,9 @@ function buildRows(headerCells: string[], dataRows: unknown[][]): PpacRow[] {
           break;
         case 'userId':
           row.userId = cell === null || cell === undefined ? null : String(cell);
+          break;
+        case 'userEmail':
+          row.userEmail = cell === null || cell === undefined ? null : String(cell);
           break;
         case 'environmentId':
           row.environmentId = cell === null || cell === undefined ? null : String(cell);

@@ -49,6 +49,23 @@ describe('PPAC consumption report CSV parser', () => {
   it('rejects files without the mandatory columns', () => {
     expect(() => parsePpacCsv('Foo,Bar\n1,2\n')).toThrow(/Unrecognized PPAC report format/);
   });
+
+  it('parses the Oct-2026 schema (UserEmail/ConsumptionUnits/StartDateTime)', () => {
+    const rows = parsePpacCsv(
+      'UserId,UserEmail,EnvironmentId,IsTrial,ConsumptionUnits,StartDateTime,EndDateTime\n' +
+        'aaaa-1,user.one@contoso.com,Default-eeee-1,false,37175.0,2026-09-03T00:00:00,2026-09-04T00:00:00\n' +
+        'aaaa-2,user.two@contoso.com,0cde-2,false,13.0,2026-10-06T00:00:00,2026-10-07T00:00:00\n'
+    );
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({
+      date: '2026-09-03',
+      userEmail: 'user.one@contoso.com',
+      environmentId: 'Default-eeee-1',
+      aiConsumption: 37175,
+      isTrial: false,
+    });
+    expect(rows[1].aiConsumption).toBe(13);
+  });
 });
 
 describe('Dataverse row mapping', () => {

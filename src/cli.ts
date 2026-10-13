@@ -225,17 +225,18 @@ program
       // AIB totals in CSV-fallback mode too.
       const factor = loaded.config.csvFallbackConversionFactor;
       for (const env of result.environments) {
-        const byUser = new Map<string, { credits: number; runs: number; months: Set<string> }>();
+        const byUser = new Map<string, { credits: number; runs: number; months: Set<string>; email: string | null }>();
         for (const row of rows) {
           if (loaded.config.excludeTrialRows && row.isTrial) continue;
           const envKey = row.environmentName || row.environmentId || '(unknown environment)';
           if (envKey !== env.environmentUrl) continue;
-          const uid = row.userId ?? '(not recorded)';
+          const uid = row.userId ?? row.userEmail ?? '(not recorded)';
           let acc = byUser.get(uid);
           if (!acc) {
-            acc = { credits: 0, runs: 0, months: new Set() };
+            acc = { credits: 0, runs: 0, months: new Set(), email: row.userEmail };
             byUser.set(uid, acc);
           }
+          if (!acc.email && row.userEmail) acc.email = row.userEmail;
           acc.credits += row.aiConsumption;
           acc.runs += 1;
           acc.months.add(monthKey(row.date));
@@ -243,7 +244,7 @@ program
         env.users = [...byUser.entries()]
           .map(([uid, a]) => ({
             userId: uid,
-            userName: uid, // PPAC export carries ids only
+            userName: a.email ?? uid, // newer PPAC schema carries user emails
             events: a.runs,
             aibCredits: a.credits,
             ccCredits: 0,

@@ -152,10 +152,14 @@ export interface SizingResult {
   warnings: string[];
 }
 
-/** One row of the PPAC "AI Builder consumption report" export. */
+/** One row of the PPAC "AI Builder consumption report" export.
+ * Two schemas observed: Date/UserId/EnvironmentId/EnvironmentName/AIConsumption/IsTrial
+ * (documented) and UserId/UserEmail/EnvironmentId/IsTrial/ConsumptionUnits/
+ * StartDateTime/EndDateTime (observed Oct 2026). */
 export interface PpacRow {
   date: string; // ISO date
   userId: string | null;
+  userEmail: string | null;
   environmentId: string | null;
   environmentName: string | null;
   aiConsumption: number;
